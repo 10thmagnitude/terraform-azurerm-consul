@@ -19,16 +19,8 @@ variable "subnet_id" {
   description = "The id of the subnet to deploy the cluster into"
 }
 
-variable "cluster_name" {
-  description = "The name of the Consul cluster (e.g. consul-stage). This variable is used to namespace all resources created by this module."
-}
-
 variable "image_id" {
   description = "The URL of the Image to run in this cluster. Should be an image that had Consul installed and configured by the install-consul module."
-}
-
-variable "instance_size" {
-  description = "The size of Azure Instances to run for each node in the cluster (e.g. Standard_A0)."
 }
 
 variable "key_data" {
@@ -48,19 +40,29 @@ variable "custom_data" {
 # OPTIONAL PARAMETERS
 # These parameters have reasonable defaults.
 # ---------------------------------------------------------------------------------------------------------------------
-variable "instance_tier" {
-  description = "Specifies the tier of virtual machines in a scale set. Possible values, standard or basic."
-  default = "standard"
+variable "create_as_server" {
+  description = "Start consul agent with -server"
+  default     = true
+}
+
+variable "instance_size" {
+  description = "The size of Azure Instances to run for each node in the cluster (e.g. Standard_A0)."
+  default     = "Standard_A1_v2"
+}
+
+variable "cluster_prefix" {
+  description = "The name of the Consul cluster (e.g. consul-stage). This variable is used to namespace all resources created by this module."
+  default     = "consul"
 }
 
 variable "computer_name_prefix" {
   description = "The string that the name of each instance in the cluster will be prefixed with"
-  default = "consul"
+  default     = "consul"
 }
 
 variable "admin_user_name" {
   description = "The name of the administrator user for each instance in the cluster"
-  default = "consuladmin"
+  default     = "consuladmin"
 }
 
 variable "instance_root_volume_size" {
@@ -108,11 +110,6 @@ variable "root_volume_type" {
 variable "root_volume_size" {
   description = "The size, in GB, of the root EBS volume."
   default     = 50
-}
-
-variable "root_volume_delete_on_termination" {
-  description = "Whether the volume should be destroyed on instance termination."
-  default     = true
 }
 
 variable "target_group_arns" {

@@ -8,30 +8,36 @@
 
 provider "azurerm" {
   subscription_id = "${var.subscription_id}"
-  client_id = "${var.client_id}"
-  client_secret = "${var.secret_access_key}"
-  tenant_id = "${var.tenant_id}"
+  client_id       = "${var.client_id}"
+  client_secret   = "${var.client_secret}"
+  tenant_id       = "${var.tenant_id}"
 }
 
 terraform {
   required_version = ">= 0.10.0"
 }
 
+data "azurerm_image" "vault" {
+  name_regex          = "${var.image_regex}"
+  resource_group_name = "${var.image_resource_group_name}"
+  sort_descending     = true
+}
+
 # ---------------------------------------------------------------------------------------------------------------------
 # CREATE THE NECESSARY NETWORK RESOURCES FOR THE EXAMPLE
 # ---------------------------------------------------------------------------------------------------------------------
 resource "azurerm_virtual_network" "consul" {
-  name = "consulvn"
-  address_space = ["${var.address_space}"]
-  location = "${var.location}"
+  name                = "consulvn"
+  address_space       = ["${var.test_address_space}"]
+  location            = "${var.location}"
   resource_group_name = "${var.resource_group_name}"
 }
 
 resource "azurerm_subnet" "consul" {
-  name = "consulsubnet"
-  resource_group_name = "${var.resource_group_name}"
+  name                 = "consulsubnet"
+  resource_group_name  = "${var.resource_group_name}"
   virtual_network_name = "${azurerm_virtual_network.consul.name}"
-  address_prefix = "${var.subnet_address}"
+  address_prefix       = "${var.test_subnet_address}"
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -44,30 +50,30 @@ module "consul_servers" {
   # source = "git::git@github.com:hashicorp/terraform-azurerm-consul.git//modules/consul-cluster?ref=v0.0.1"
   source = "./modules/consul-cluster"
 
-  cluster_name = "${var.cluster_name}-server"
-  cluster_size = "${var.num_servers}"
-  key_data = "${var.key_data}"
+  cluster_prefix = "${var.cluster_name}"
+  cluster_size   = "${var.num_servers}"
+  key_data       = "${var.key_data}"
 
   # To make testing easier, we allow Consul and SSH requests from any IP address here but in a production
   # deployment, we strongly recommend you limit this to the IP address ranges of known, trusted servers inside your VPC.
   allowed_ssh_cidr_blocks = "${var.allowed_ssh_cidr_blocks}"
+
   allowed_inbound_cidr_blocks = "${var.allowed_inbound_cidr_blocks}"
 
-  resource_group_name = "${var.resource_group_name}"
+  resource_group_name  = "${var.resource_group_name}"
   storage_account_name = "${var.storage_account_name}"
 
-  location = "${var.location}"
-  custom_data = "${data.template_file.user_data_server.rendered}"
+  location      = "${var.location}"
+  custom_data   = "${file("${path.module}/custom-data.sh")}"
   instance_size = "${var.instance_size}"
-  image_id = "${var.image_uri}"
-  subnet_id = "${azurerm_subnet.consul.id}"
+  image_id      = "${data.azurerm_image.vault.id}"
+  subnet_id     = "${azurerm_subnet.consul.id}"
 
   # When set to true, a load balancer will be created to allow SSH to the instances as described in the 'Connect to VMs by using NAT rules'
   # section of https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-overview
   #
   # For testing and development purposes, set this to true. For production, this should be set to false.
   associate_public_ip_address_load_balancer = true
-
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -76,14 +82,13 @@ module "consul_servers" {
 # ---------------------------------------------------------------------------------------------------------------------
 
 data "template_file" "user_data_server" {
-  template = "${file("${path.module}/custom-data-server.sh")}"
+  template = "${file("${path.module}/custom-data.sh")}"
 
   vars {
-    scale_set_name = "${var.cluster_name}-server"
-    subscription_id = "${var.subscription_id}"
-    tenant_id = "${var.tenant_id}"
-    client_id = "${var.client_id}"
-    secret_access_key = "${var.secret_access_key}"
+    subscription_id   = "${var.subscription_id}"
+    tenant_id         = "${var.tenant_id}"
+    client_id         = "${var.client_id}"
+    secret_access_key = "${var.client_secret}"
   }
 }
 
@@ -100,45 +105,28 @@ module "consul_clients" {
   # source = "git::git@github.com:hashicorp/terraform-azurerm-consul.git//modules/consul-cluster?ref=v0.0.1"
   source = "./modules/consul-cluster"
 
-  cluster_name = "${var.cluster_name}-client"
-  cluster_size = "${var.num_clients}"
-  key_data = "${var.key_data}"
+  cluster_prefix = "${var.cluster_name}-client"
+  cluster_size   = "${var.num_clients}"
+  key_data       = "${var.key_data}"
 
   # To make testing easier, we allow Consul and SSH requests from any IP address here but in a production
   # deployment, we strongly recommend you limit this to the IP address ranges of known, trusted servers inside your VPC.
   allowed_ssh_cidr_blocks = "${var.allowed_ssh_cidr_blocks}"
+
   allowed_inbound_cidr_blocks = "${var.allowed_inbound_cidr_blocks}"
 
-  resource_group_name = "${var.resource_group_name}"
+  resource_group_name  = "${var.resource_group_name}"
   storage_account_name = "${var.storage_account_name}"
 
-
-  location = "${var.location}"
-  custom_data = "${data.template_file.user_data_client.rendered}"
+  location      = "${var.location}"
+  custom_data   = "${file("${path.module}/custom-data.sh")}"
   instance_size = "${var.instance_size}"
-  image_id = "${var.image_uri}"
-  subnet_id = "${azurerm_subnet.consul.id}"
+  image_id      = "${data.azurerm_image.vault.id}"
+  subnet_id     = "${azurerm_subnet.consul.id}"
 
   # When set to true, a load balancer will be created to allow SSH to the instances as described in the 'Connect to VMs by using NAT rules'
   # section of https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-overview
   #
   # For testing and development purposes, set this to true. For production, this should be set to false.
   associate_public_ip_address_load_balancer = true
-}
-
-# ---------------------------------------------------------------------------------------------------------------------
-# THE CUSTOM DATA SCRIPT THAT WILL RUN ON EACH CONSUL CLIENT AZURE COMPUTE INSTANCE WHEN IT'S BOOTING
-# This script will configure and start Consul
-# ---------------------------------------------------------------------------------------------------------------------
-
-data "template_file" "user_data_client" {
-  template = "${file("${path.module}/custom-data-client.sh")}"
-
-  vars {
-    scale_set_name = "${var.cluster_name}-client"
-    subscription_id = "${var.subscription_id}"
-    tenant_id = "${var.tenant_id}"
-    client_id = "${var.client_id}"
-    secret_access_key = "${var.secret_access_key}"
-  }
 }

@@ -8,5 +8,6 @@ set -e
 # Send the log output from this script to custom-data.log, syslog, and the console
 exec > >(tee /var/log/custom-data.log|logger -t custom-data -s 2>/dev/console) 2>&1
 
-# These variables are passed in via Terraform template interplation
-/opt/consul/bin/run-consul --server --scale-set-name "${scale_set_name}" --subscription-id "${subscription_id}" --tenant-id "${tenant_id}" --client-id "${client_id}" --secret-access-key "${secret_access_key}"
+systemctl daemon-reload
+systemctl start consul.service
+systemctl enable consul.service
