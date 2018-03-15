@@ -32,7 +32,15 @@ variable "storage_account_name" {
 
 variable "image_regex" {
   description = "The expression to find the managed Azure image that should be deployed to the consul cluster."
-  default     = "com.lgc.vault-ubuntu-16.04-v*"
+  default     = "com.lgc.vault-centos-7.3-v*"
+}
+
+variable "admin_user_name" {
+  default = "haladmin"
+}
+
+variable "private_key_path" {
+  default = "~/.ssh/hal_vault_admin_rsa"
 }
 
 variable "key_data" {
@@ -78,7 +86,7 @@ variable "cluster_name" {
 
 variable "instance_size" {
   description = "The instance size for the servers"
-  default     = "Standard_A0"
+  default     = "Standard_A1_v2"
 }
 
 variable "num_servers" {

@@ -1,12 +1,12 @@
 {
   "advertise_addr":   "${node_ip_address}",
   "bind_addr":        "${node_ip_address}",
-  "bootstrap_expect": "${cluster_size}",
+  "bootstrap_expect": ${cluster_size},
   "client_addr":      "0.0.0.0",
-  "datacenter":       "${location}",
+  "datacenter":       "${datacenter}",
   "node_name":        "${node_name}",
   "retry_join":       ["${join_ip_address}"],
-  "data-dir":         "/opt/consul"
+  "data_dir":         "/opt/consul",
   "server":           ${is_node_server},
   "ui":               ${is_ui_enabled},
   "raft_protocol":    3

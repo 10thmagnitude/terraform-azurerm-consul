@@ -17,7 +17,12 @@ terraform {
   required_version = ">= 0.10.0"
 }
 
-data "azurerm_image" "vault" {
+resource "azurerm_resource_group" "consul" {
+  name     = "${var.resource_group_name}"
+  location = "${var.location}"
+}
+
+data "azurerm_image" "consul" {
   name_regex          = "${var.image_regex}"
   resource_group_name = "${var.image_resource_group_name}"
   sort_descending     = true
@@ -30,12 +35,12 @@ resource "azurerm_virtual_network" "consul" {
   name                = "consulvn"
   address_space       = ["${var.test_address_space}"]
   location            = "${var.location}"
-  resource_group_name = "${var.resource_group_name}"
+  resource_group_name = "${azurerm_resource_group.consul.name}"
 }
 
 resource "azurerm_subnet" "consul" {
   name                 = "consulsubnet"
-  resource_group_name  = "${var.resource_group_name}"
+  resource_group_name  = "${azurerm_resource_group.consul.name}"
   virtual_network_name = "${azurerm_virtual_network.consul.name}"
   address_prefix       = "${var.test_subnet_address}"
 }
@@ -60,20 +65,17 @@ module "consul_servers" {
 
   allowed_inbound_cidr_blocks = "${var.allowed_inbound_cidr_blocks}"
 
-  resource_group_name  = "${var.resource_group_name}"
+  resource_group_name  = "${azurerm_resource_group.consul.name}"
   storage_account_name = "${var.storage_account_name}"
 
-  location      = "${var.location}"
-  custom_data   = "${file("${path.module}/custom-data.sh")}"
-  instance_size = "${var.instance_size}"
-  image_id      = "${data.azurerm_image.vault.id}"
-  subnet_id     = "${azurerm_subnet.consul.id}"
-
-  # When set to true, a load balancer will be created to allow SSH to the instances as described in the 'Connect to VMs by using NAT rules'
-  # section of https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-overview
-  #
-  # For testing and development purposes, set this to true. For production, this should be set to false.
-  associate_public_ip_address_load_balancer = true
+  location             = "${var.location}"
+  admin_user_name      = "${var.admin_user_name}"
+  bastion_host_address = "${data.azurerm_public_ip.bastion.ip_address}"
+  private_key_path     = "${file(var.private_key_path)}"
+  custom_data          = ""
+  instance_size        = "${var.instance_size}"
+  image_id             = "${data.azurerm_image.consul.id}"
+  subnet_id            = "${azurerm_subnet.consul.id}"
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -93,40 +95,70 @@ data "template_file" "user_data_server" {
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
-# DEPLOY THE CONSUL CLIENT NODES
-# Note that you do not have to use the consul-cluster module to deploy your clients. We do so simply because it
-# provides a convenient way to deploy a Scale Set for Consul, but feel free to deploy those clients however you choose
-# (e.g. a single Azure Compute Instance, a Docker cluster, etc).
+# BASTION FOR TESTING
 # ---------------------------------------------------------------------------------------------------------------------
+data "azurerm_public_ip" "bastion" {
+  name                = "${azurerm_public_ip.bastion.name}"
+  resource_group_name = "${azurerm_resource_group.consul.name}"
+  depends_on          = ["azurerm_public_ip.bastion"]
+}
 
-module "consul_clients" {
-  # When using these modules in your own templates, you will need to use a Git URL with a ref attribute that pins you
-  # to a specific version of the modules, such as the following example:
-  # source = "git::git@github.com:hashicorp/terraform-azurerm-consul.git//modules/consul-cluster?ref=v0.0.1"
-  source = "./modules/consul-cluster"
+resource "azurerm_public_ip" "bastion" {
+  name                         = "bastion-pip"
+  location                     = "${azurerm_resource_group.consul.location}"
+  resource_group_name          = "${azurerm_resource_group.consul.name}"
+  public_ip_address_allocation = "static"
+  idle_timeout_in_minutes      = 30
+}
 
-  cluster_prefix = "${var.cluster_name}-client"
-  cluster_size   = "${var.num_clients}"
-  key_data       = "${var.key_data}"
+resource "azurerm_network_interface" "bastion" {
+  name                = "bastion-nic"
+  location            = "${azurerm_resource_group.consul.location}"
+  resource_group_name = "${azurerm_resource_group.consul.name}"
 
-  # To make testing easier, we allow Consul and SSH requests from any IP address here but in a production
-  # deployment, we strongly recommend you limit this to the IP address ranges of known, trusted servers inside your VPC.
-  allowed_ssh_cidr_blocks = "${var.allowed_ssh_cidr_blocks}"
+  ip_configuration {
+    name                          = "ip-cfg"
+    subnet_id                     = "${azurerm_subnet.consul.id}"
+    private_ip_address_allocation = "dynamic"
+    public_ip_address_id          = "${azurerm_public_ip.bastion.id}"
+  }
+}
 
-  allowed_inbound_cidr_blocks = "${var.allowed_inbound_cidr_blocks}"
+resource "azurerm_virtual_machine" "bastion" {
+  name                          = "bastion-01"
+  location                      = "${azurerm_resource_group.consul.location}"
+  resource_group_name           = "${azurerm_resource_group.consul.name}"
+  network_interface_ids         = ["${azurerm_network_interface.bastion.id}"]
+  vm_size                       = "Standard_A1_v2"
+  delete_os_disk_on_termination = true
 
-  resource_group_name  = "${var.resource_group_name}"
-  storage_account_name = "${var.storage_account_name}"
+  storage_image_reference {
+    id = "${data.azurerm_image.consul.id}"
+  }
 
-  location      = "${var.location}"
-  custom_data   = "${file("${path.module}/custom-data.sh")}"
-  instance_size = "${var.instance_size}"
-  image_id      = "${data.azurerm_image.vault.id}"
-  subnet_id     = "${azurerm_subnet.consul.id}"
+  storage_os_disk {
+    name              = "bastion-01-disk"
+    caching           = "ReadWrite"
+    create_option     = "FromImage"
+    managed_disk_type = "Standard_LRS"
+  }
 
-  # When set to true, a load balancer will be created to allow SSH to the instances as described in the 'Connect to VMs by using NAT rules'
-  # section of https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-overview
-  #
-  # For testing and development purposes, set this to true. For production, this should be set to false.
-  associate_public_ip_address_load_balancer = true
+  os_profile {
+    computer_name  = "bastion-01"
+    admin_username = "${var.admin_user_name}"
+    admin_password = "${uuid()}"
+  }
+
+  os_profile_linux_config {
+    disable_password_authentication = false
+
+    ssh_keys {
+      path     = "/home/haladmin/.ssh/authorized_keys"
+      key_data = "${var.key_data}"
+    }
+  }
+
+  lifecycle {
+    ignore_changes = ["admin_password"]
+  }
 }

@@ -11,81 +11,10 @@ data "template_file" "cfg" {
     cluster_size    = "${var.cluster_size}"
     datacenter      = "${var.location}"
     node_name       = "${format("${var.computer_name_prefix}-%02d", 1 + count.index)}"
-    join_ip_address = "${azurerm_network_interface.consul.0.private_ip_address}"
-    is_node_server  = "${var.create_as_server}"
-    is_ui_enabled   = "${(var.create_as_server && count.index == 0) ? true : false}"
+    join_ip_address = "${count.index > 0 ? azurerm_network_interface.consul.0.private_ip_address : ""}"
+    is_node_server  = "${var.create_as_server == "1" ? true : false }"
+    is_ui_enabled   = "${(var.create_as_server && count.index == 0) ? true : false }"
   }
-}
-
-data "azurerm_resource_group" "destination" {
-  name = "${var.resource_group_name}"
-}
-
-#---------------------------------------------------------------------------------------------------------------------
-# CREATE A LOAD BALANCER FOR TEST ACCESS (SHOULD BE DISABLED FOR PROD)
-#---------------------------------------------------------------------------------------------------------------------
-resource "azurerm_public_ip" "consul_access" {
-  count                        = "${var.associate_public_ip_address_load_balancer ? 1 : 0}"
-  name                         = "${var.cluster_prefix}_access"
-  location                     = "${var.location}"
-  resource_group_name          = "${data.azurerm_resource_group.destination.name}"
-  public_ip_address_allocation = "static"
-  domain_name_label            = "${var.cluster_prefix}"
-}
-
-resource "azurerm_lb" "consul_access" {
-  count               = "${var.associate_public_ip_address_load_balancer ? 1 : 0}"
-  name                = "${var.cluster_prefix}_access"
-  location            = "${var.location}"
-  resource_group_name = "${data.azurerm_resource_group.destination.name}"
-
-  frontend_ip_configuration {
-    name                 = "PublicIPAddress"
-    public_ip_address_id = "${azurerm_public_ip.consul_access.id}"
-  }
-}
-
-resource "azurerm_lb_nat_pool" "consul_lbnatpool" {
-  count                          = "${var.associate_public_ip_address_load_balancer ? 1 : 0}"
-  resource_group_name            = "${data.azurerm_resource_group.destination.name}"
-  name                           = "ssh"
-  loadbalancer_id                = "${azurerm_lb.consul_access.id}"
-  protocol                       = "Tcp"
-  frontend_port_start            = 2200
-  frontend_port_end              = 2299
-  backend_port                   = 22
-  frontend_ip_configuration_name = "PublicIPAddress"
-}
-
-resource "azurerm_lb_nat_pool" "consul_lbnatpool_rpc" {
-  count                          = "${var.associate_public_ip_address_load_balancer ? 1 : 0}"
-  resource_group_name            = "${data.azurerm_resource_group.destination.name}"
-  name                           = "rpc"
-  loadbalancer_id                = "${azurerm_lb.consul_access.id}"
-  protocol                       = "Tcp"
-  frontend_port_start            = 8300
-  frontend_port_end              = 8399
-  backend_port                   = 8300
-  frontend_ip_configuration_name = "PublicIPAddress"
-}
-
-resource "azurerm_lb_nat_pool" "consul_lbnatpool_http" {
-  count                          = "${var.associate_public_ip_address_load_balancer ? 1 : 0}"
-  resource_group_name            = "${data.azurerm_resource_group.destination.name}"
-  name                           = "http"
-  loadbalancer_id                = "${azurerm_lb.consul_access.id}"
-  protocol                       = "Tcp"
-  frontend_port_start            = 8500
-  frontend_port_end              = 8599
-  backend_port                   = 8500
-  frontend_ip_configuration_name = "PublicIPAddress"
-}
-
-resource "azurerm_lb_backend_address_pool" "consul_bepool" {
-  count               = "${var.associate_public_ip_address_load_balancer ? 1 : 0}"
-  resource_group_name = "${data.azurerm_resource_group.destination.name}"
-  loadbalancer_id     = "${azurerm_lb.consul_access.id}"
-  name                = "BackEndAddressPool"
 }
 
 #---------------------------------------------------------------------------------------------------------------------
@@ -96,13 +25,12 @@ resource "azurerm_network_interface" "consul" {
   count               = "${var.cluster_size}"
   name                = "${format("${var.computer_name_prefix}-%02d", 1 + count.index)}"
   location            = "${var.location}"
-  resource_group_name = "${data.azurerm_resource_group.destination.name}"
+  resource_group_name = "${var.resource_group_name}"
 
   ip_configuration {
-    name                                    = "${format("${var.computer_name_prefix}-%02d", 1 + count.index)}"
-    subnet_id                               = "${var.subnet_id}"
-    private_ip_address_allocation           = "dynamic"
-    load_balancer_backend_address_pools_ids = ["${var.associate_public_ip_address_load_balancer ? azurerm_lb_backend_address_pool.consul_bepool.id : ""}"]
+    name                          = "${format("${var.computer_name_prefix}-%02d", 1 + count.index)}"
+    subnet_id                     = "${var.subnet_id}"
+    private_ip_address_allocation = "dynamic"
   }
 }
 
@@ -114,8 +42,8 @@ resource "azurerm_virtual_machine" "consul" {
   count                            = "${var.cluster_size}"
   name                             = "${format("${var.computer_name_prefix}-%02d", 1 + count.index)}"
   location                         = "${var.location}"
-  resource_group_name              = "${data.azurerm_resource_group.destination.name}"
-  network_interface_ids            = ["${azurerm_network_interface.consul.*.private_ip_address[count.index]}"]
+  resource_group_name              = "${var.resource_group_name}"
+  network_interface_ids            = ["${azurerm_network_interface.consul.*.id[count.index]}"]
   vm_size                          = "${var.instance_size}"
   delete_os_disk_on_termination    = true
   delete_data_disks_on_termination = true
@@ -151,13 +79,37 @@ resource "azurerm_virtual_machine" "consul" {
   }
 
   provisioner "file" {
-    source      = "${file(join("/", list(path.module, "files", "consul-service")))}"
-    destination = "/etc/systemd/system/consul.service"
+    source      = "${path.module}/files/consul-service"
+    destination = "/tmp/consul.service.moveme"
   }
 
   provisioner "file" {
-    content     = "${data.template_file.cfg.rendered}"
-    destination = "/opt/consul/config/config.json"
+    content     = "${file("${path.module}/files/consul-config-ui")}"
+    destination = "/tmp/ui.json.moveme"
+  }
+
+  provisioner "file" {
+    content     = "${data.template_file.cfg.*.rendered[count.index]}"
+    destination = "/tmp/config.json.moveme"
+  }
+
+  provisioner "file" {
+    content     = "${file("${path.module}/files/consul-run")}"
+    destination = "/tmp/consul-run.sh"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "sudo chmod +x /tmp/consul-run.sh",
+      "sudo /bin/bash -c /tmp/consul-run.sh",
+    ]
+  }
+
+  connection {
+    user         = "${var.admin_user_name}"
+    host         = "${azurerm_network_interface.consul.*.private_ip_address[count.index]}"
+    private_key  = "${var.private_key_path}"
+    bastion_host = "${var.bastion_host_address}"
   }
 }
 
@@ -168,7 +120,7 @@ resource "azurerm_virtual_machine" "consul" {
 resource "azurerm_network_security_group" "consul" {
   name                = "${var.cluster_prefix}"
   location            = "${var.location}"
-  resource_group_name = "${data.azurerm_resource_group.destination.name}"
+  resource_group_name = "${var.resource_group_name}"
 }
 
 resource "azurerm_network_security_rule" "ssh" {
@@ -182,7 +134,7 @@ resource "azurerm_network_security_rule" "ssh" {
   network_security_group_name = "${azurerm_network_security_group.consul.name}"
   priority                    = "${100 + count.index}"
   protocol                    = "Tcp"
-  resource_group_name         = "${data.azurerm_resource_group.destination.name}"
+  resource_group_name         = "${var.resource_group_name}"
   source_address_prefix       = "${element(var.allowed_ssh_cidr_blocks, count.index)}"
   source_port_range           = "1024-65535"
 }
@@ -195,7 +147,7 @@ module "security_group_rules" {
   source = "../consul-security-group-rules"
 
   security_group_name         = "${azurerm_network_security_group.consul.name}"
-  resource_group_name         = "${data.azurerm_resource_group.destination.name}"
+  resource_group_name         = "${var.resource_group_name}"
   allowed_inbound_cidr_blocks = ["${var.allowed_inbound_cidr_blocks}"]
 
   server_rpc_port = "${var.server_rpc_port}"

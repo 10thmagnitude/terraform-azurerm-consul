@@ -27,6 +27,14 @@ variable "key_data" {
   description = "The SSH public key that will be added to SSH authorized_users on the consul instances"
 }
 
+variable "private_key_path" {
+  description = "The local path of the ssh private key"
+}
+
+variable "bastion_host_address" {
+  description = "The ip address of the bastion host"
+}
+
 variable "allowed_inbound_cidr_blocks" {
   description = "A list of CIDR-formatted IP address ranges from which the Azure Instances will allow connections to Consul"
   type        = "list"
@@ -95,11 +103,6 @@ variable "allowed_ssh_cidr_blocks" {
   description = "A list of CIDR-formatted IP address ranges from which the Azure Instances will allow SSH connections"
   type        = "list"
   default     = []
-}
-
-variable "associate_public_ip_address_load_balancer" {
-  description = "If set to true, create a public IP address with back end pool to allow SSH publically to the instances."
-  default     = false
 }
 
 variable "root_volume_type" {
