@@ -11,7 +11,7 @@ data "template_file" "cfg" {
     cluster_size    = "${var.cluster_size}"
     datacenter      = "${var.location}"
     node_name       = "${format("${var.computer_name_prefix}-%02d", 1 + count.index)}"
-    join_ip_address = "${count.index > 0 ? azurerm_network_interface.consul.0.private_ip_address : ""}"
+    join_ip_address = "${azurerm_network_interface.consul.0.private_ip_address}"
     is_node_server  = "${var.create_as_server == "1" ? true : false }"
     is_ui_enabled   = "${(var.create_as_server && count.index == 0) ? true : false }"
   }
@@ -63,10 +63,7 @@ resource "azurerm_virtual_machine" "consul" {
   os_profile {
     computer_name  = "${format("${var.computer_name_prefix}-%02d", 1 + count.index)}"
     admin_username = "${var.admin_user_name}"
-
-    #This password is unimportant as it is disabled below in the os_profile_linux_config
-    admin_password = "Passwword1234"
-    custom_data    = "${var.custom_data}"
+    admin_password = "${uuid()}"
   }
 
   os_profile_linux_config {
@@ -83,11 +80,7 @@ resource "azurerm_virtual_machine" "consul" {
     destination = "/tmp/consul.service.moveme"
   }
 
-  provisioner "file" {
-    content     = "${file("${path.module}/files/consul-config-ui")}"
-    destination = "/tmp/ui.json.moveme"
-  }
-
+  ## TODO: add recursors property to 
   provisioner "file" {
     content     = "${data.template_file.cfg.*.rendered[count.index]}"
     destination = "/tmp/config.json.moveme"
@@ -110,6 +103,10 @@ resource "azurerm_virtual_machine" "consul" {
     host         = "${azurerm_network_interface.consul.*.private_ip_address[count.index]}"
     private_key  = "${var.private_key_path}"
     bastion_host = "${var.bastion_host_address}"
+  }
+
+  lifecycle {
+    ignore_changes = ["admin_password"]
   }
 }
 

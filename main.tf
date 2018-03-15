@@ -72,7 +72,6 @@ module "consul_servers" {
   admin_user_name      = "${var.admin_user_name}"
   bastion_host_address = "${data.azurerm_public_ip.bastion.ip_address}"
   private_key_path     = "${file(var.private_key_path)}"
-  custom_data          = ""
   instance_size        = "${var.instance_size}"
   image_id             = "${data.azurerm_image.consul.id}"
   subnet_id            = "${azurerm_subnet.consul.id}"

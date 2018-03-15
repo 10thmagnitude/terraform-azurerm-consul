@@ -40,9 +40,9 @@ variable "allowed_inbound_cidr_blocks" {
   type        = "list"
 }
 
-variable "custom_data" {
-  description = "A Custom Data script to execute while the server is booting. We remmend passing in a bash script that executes the run-consul script, which should have been installed in the Consul Image by the install-consul module."
-}
+# variable "custom_data" {
+#   description = "A Custom Data script to execute while the server is booting. We remmend passing in a bash script that executes the run-consul script, which should have been installed in the Consul Image by the install-consul module."
+# }
 
 # ---------------------------------------------------------------------------------------------------------------------
 # OPTIONAL PARAMETERS
