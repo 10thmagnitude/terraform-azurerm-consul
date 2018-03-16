@@ -3,8 +3,11 @@ Description=Consul
 Documentation=https://www.consul.io/
 
 [Service]
-ExecStart=/usr/local/bin/consul agent -config-dir=/opt/consul/config/
-ExecReload=/bin/kill -HUP $MAINPID
+PIDFile=/run/consul/consul.pid
+Restart=on-failure
+ExecStart=/usr/local/bin/consul agent -config-dir=/opt/consul/config/ -pid-file=/run/consul/consul.pid
+ExecReload=/bin/kill -s HUP $MAINPID
+KillSignal=SIGINT
 LimitNOFILE=65536
 
 [Install]

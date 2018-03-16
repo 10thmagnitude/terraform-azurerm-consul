@@ -1,5 +1,5 @@
 {
-  "advertise_addr":   "${node_ip_address}",
+  "advertise_addr":     "${node_ip_address}",
   "bind_addr":          "${node_ip_address}",
   "bootstrap_expect":   ${cluster_size},
   "client_addr":        "0.0.0.0",

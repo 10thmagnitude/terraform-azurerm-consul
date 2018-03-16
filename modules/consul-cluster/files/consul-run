@@ -11,6 +11,7 @@ exec > >(tee /var/log/custom-data.log|logger -t custom-data -s 2>/dev/console) 2
 mv /tmp/consul.service.moveme /etc/systemd/system/consul.service
 mv /tmp/config.json.moveme /opt/consul/config/config.json
 
+chown root:root /etc/systemd/system/consul.service
 chown consul:consul /opt/consul/config/config.json
 
 systemctl daemon-reload
