@@ -36,10 +36,6 @@ variable "allowed_inbound_cidr_blocks" {
   type        = "list"
 }
 
-# variable "custom_data" {
-#   description = "A Custom Data script to execute while the server is booting. We remmend passing in a bash script that executes the run-consul script, which should have been installed in the Consul Image by the install-consul module."
-# }
-
 # ---------------------------------------------------------------------------------------------------------------------
 # OPTIONAL PARAMETERS
 # These parameters have reasonable defaults.
@@ -79,16 +75,6 @@ variable "cluster_size" {
   default     = 3
 }
 
-variable "cluster_tag_key" {
-  description = "Add a tag with this key and the value var.cluster_tag_value to each Instance in the ASG. This can be used to automatically find other Consul nodes and form a cluster."
-  default     = "consul-servers"
-}
-
-variable "cluster_tag_value" {
-  description = "Add a tag with key var.clsuter_tag_key and this value to each Instance in the ASG. This can be used to automatically find other Consul nodes and form a cluster."
-  default     = "auto-join"
-}
-
 variable "subnet_ids" {
   description = "The subnet IDs into which the Azure Instances should be deployed. We recommend one subnet ID per node in the cluster_size variable. At least one of var.subnet_ids or var.availability_zones must be non-empty."
   type        = "list"
@@ -99,33 +85,6 @@ variable "allowed_ssh_cidr_blocks" {
   description = "A list of CIDR-formatted IP address ranges from which the Azure Instances will allow SSH connections"
   type        = "list"
   default     = []
-}
-
-variable "root_volume_type" {
-  description = "The type of volume. Must be one of: standard, gp2, or io1."
-  default     = "standard"
-}
-
-variable "root_volume_size" {
-  description = "The size, in GB, of the root EBS volume."
-  default     = 50
-}
-
-variable "target_group_arns" {
-  description = "A list of target group ARNs of Application Load Balanacer (ALB) targets to associate with this ASG. If you're using a Elastic Load Balancer (AKA ELB Classic), use the load_balancers variable instead."
-  type        = "list"
-  default     = []
-}
-
-variable "load_balancers" {
-  description = "A list of Elastic Load Balancer (ELB) names to associate with this ASG. If you're using an Application Load Balancer (ALB), use the target_group_arns variable instead."
-  type        = "list"
-  default     = []
-}
-
-variable "wait_for_capacity_timeout" {
-  description = "A maximum duration that Terraform should wait for ASG instances to be healthy before timing out. Setting this to '0' causes Terraform to skip all Capacity Waiting behavior."
-  default     = "10m"
 }
 
 variable "server_rpc_port" {
