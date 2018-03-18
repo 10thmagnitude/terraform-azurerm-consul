@@ -66,7 +66,6 @@ module "consul_servers" {
   allowed_inbound_cidr_blocks = "${var.allowed_inbound_cidr_blocks}"
 
   resource_group_name  = "${azurerm_resource_group.consul.name}"
-  storage_account_name = "${var.storage_account_name}"
 
   location             = "${var.location}"
   admin_user_name      = "${var.admin_user_name}"
