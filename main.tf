@@ -151,7 +151,7 @@ resource "azurerm_virtual_machine" "bastion" {
     disable_password_authentication = false
 
     ssh_keys {
-      path     = "/home/haladmin/.ssh/authorized_keys"
+      path     = "/home/${var.admin_user_name}/.ssh/authorized_keys"
       key_data = "${var.key_data}"
     }
   }
