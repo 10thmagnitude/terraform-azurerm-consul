@@ -77,22 +77,6 @@ module "consul_servers" {
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
-# THE CUSTOM DATA SCRIPT THAT WILL RUN ON EACH CONSUL SERVER AZURE INSTANCE WHEN IT'S BOOTING
-# This script will configure and start Consul
-# ---------------------------------------------------------------------------------------------------------------------
-
-data "template_file" "user_data_server" {
-  template = "${file("${path.module}/custom-data.sh")}"
-
-  vars {
-    subscription_id   = "${var.subscription_id}"
-    tenant_id         = "${var.tenant_id}"
-    client_id         = "${var.client_id}"
-    secret_access_key = "${var.client_secret}"
-  }
-}
-
-# ---------------------------------------------------------------------------------------------------------------------
 # BASTION FOR TESTING
 # ---------------------------------------------------------------------------------------------------------------------
 data "azurerm_public_ip" "bastion" {
