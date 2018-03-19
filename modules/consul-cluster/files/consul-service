@@ -5,6 +5,9 @@ Documentation=https://www.consul.io/
 [Service]
 PIDFile=/run/consul/consul.pid
 Restart=on-failure
+RestartSec=5
+StartLimitInterval=180
+StartLimitBurst=30
 ExecStart=/usr/local/bin/consul agent -config-dir=/opt/consul/config/ -pid-file=/run/consul/consul.pid
 ExecReload=/bin/kill -s HUP $MAINPID
 KillSignal=SIGINT
