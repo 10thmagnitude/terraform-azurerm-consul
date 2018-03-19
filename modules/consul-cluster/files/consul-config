@@ -7,7 +7,7 @@
   "node_name":          "${node_name}",
   "rejoin_after_leave": true,
   "retry_join":         ["${join_ip_address}"],
-  "data_dir":           "/opt/consul",
+  "data_dir":           "/etc/consul",
   "server":             ${is_node_server},
   "ui":                 ${is_ui_enabled},
   "raft_protocol":      3

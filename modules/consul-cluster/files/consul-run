@@ -9,10 +9,10 @@ set -e
 exec > >(tee /var/log/custom-data.log|logger -t custom-data -s 2>/dev/console) 2>&1
 
 mv /tmp/consul.service.moveme /etc/systemd/system/consul.service
-mv /tmp/config.json.moveme /opt/consul/config/config.json
+mv /tmp/config.json.moveme /etc/consul/config/config.json
 
 chown root:root /etc/systemd/system/consul.service
-chown consul:consul /opt/consul/config/config.json
+chown consul:consul /etc/consul/config/config.json
 
 systemctl daemon-reload
 systemctl start consul.service
