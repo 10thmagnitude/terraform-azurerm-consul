@@ -4,7 +4,7 @@ terraform {
 
 data "template_file" "cfg" {
   count    = "${var.cluster_size}"
-  template = "${file("${path.module}/files/consul-config")} "
+  template = "${file("${path.module}/files/consul-config-json")} "
 
   vars {
     node_ip_address = "${azurerm_network_interface.consul.*.private_ip_address[count.index]}"
@@ -77,7 +77,7 @@ resource "azurerm_virtual_machine" "consul" {
 
   ## TODO: consul service user/group should be consul/consul?
   provisioner "file" {
-    source      = "${path.module}/files/consul-service"
+    source      = "${path.module}/files/consul-service-systemd"
     destination = "/tmp/consul.service.moveme"
   }
 
@@ -91,7 +91,7 @@ resource "azurerm_virtual_machine" "consul" {
     destination = "/tmp/config.json.moveme"
   }
   provisioner "file" {
-    content     = "${file("${path.module}/files/consul-run")}"
+    content     = "${file("${path.module}/files/consul-run-sh")}"
     destination = "/tmp/consul-run.sh"
   }
   provisioner "remote-exec" {
