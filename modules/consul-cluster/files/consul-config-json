@@ -1,14 +1,16 @@
 {
-  "advertise_addr":     "${node_ip_address}",
-  "bind_addr":          "${node_ip_address}",
-  "bootstrap_expect":   ${cluster_size},
-  "client_addr":        "0.0.0.0",
-  "datacenter":         "${datacenter}",
-  "node_name":          "${node_name}",
-  "rejoin_after_leave": true,
-  "retry_join":         ["${join_ip_address}"],
-  "data_dir":           "/etc/consul",
-  "server":             ${is_node_server},
-  "ui":                 ${is_ui_enabled},
-  "raft_protocol":      3
+  "advertise_addr":       "${node_ip_address}",
+  "bind_addr":            "${node_ip_address}",
+  "bootstrap_expect":     ${cluster_size},
+  "client_addr":          "0.0.0.0",
+  "datacenter":           "${datacenter}",
+  "node_name":            "${node_name}",
+  "retry_join":           ["${join_ip_address}"],
+  "data_dir":             "/etc/consul",
+  "server":               ${is_node_server},
+  "ui":                   ${is_ui_enabled},
+  "raft_protocol":        3,
+  "enable_script_checks": true,
+  "leave_on_terminate":   true,
+  "disable_remote_exec":  true
 }

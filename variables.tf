@@ -22,12 +22,7 @@ variable "image_resource_group_name" {}
 
 variable "resource_group_name" {
   description = "The name of the Azure resource group consul will be deployed into. This RG should already exist"
-  default     = "catavault"
-}
-
-variable "storage_account_name" {
-  description = "The name of an Azure Storage Account. This SA should already exist"
-  default     = "testconsul"
+  default     = "consuelo"
 }
 
 variable "image_regex" {

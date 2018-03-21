@@ -75,37 +75,34 @@ resource "azurerm_virtual_machine" "consul" {
     }
   }
 
-  ## TODO: consul service user/group should be consul/consul?
-  provisioner "file" {
-    source      = "${path.module}/files/consul-service-systemd"
-    destination = "/tmp/consul.service.moveme"
-  }
-
   ## TODO: check recursors property in consul config for external DNS??
   ## TODO: simplify consul configuration file, by grabbing username:
   # $(echo `hostname`)
   # $(ifconfig eth0 | grep 'inet' | cut -d: -f2 | awk '{ print $2}')
-
   provisioner "file" {
     content     = "${data.template_file.cfg.*.rendered[count.index]}"
     destination = "/tmp/config.json.moveme"
   }
+
   provisioner "file" {
     content     = "${file("${path.module}/files/consul-run-sh")}"
     destination = "/tmp/consul-run.sh"
   }
+
   provisioner "remote-exec" {
     inline = [
       "sudo chmod +x /tmp/consul-run.sh",
       "sudo /bin/bash -c /tmp/consul-run.sh",
     ]
   }
+
   connection {
     user         = "${var.admin_user_name}"
     host         = "${azurerm_network_interface.consul.*.private_ip_address[count.index]}"
     private_key  = "${var.private_key_path}"
     bastion_host = "${var.bastion_host_address}"
   }
+
   lifecycle {
     ignore_changes = ["admin_password"]
   }
