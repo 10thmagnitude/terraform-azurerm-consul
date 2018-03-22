@@ -8,7 +8,7 @@ Restart=on-failure
 RestartSec=5
 StartLimitInterval=180
 StartLimitBurst=30
-ExecStart=/usr/local/bin/consul agent -config-dir=/etc/consul/config/ -pid-file=/run/consul.pid
+ExecStart=/usr/local/bin/consul agent -config-dir=/etc/consul.d/config/ -pid-file=/run/consul.pid
 ExecReload=/bin/kill -s HUP $MAINPID
 KillSignal=SIGINT
 LimitNOFILE=65536

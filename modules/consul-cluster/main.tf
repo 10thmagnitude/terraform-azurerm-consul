@@ -7,13 +7,19 @@ data "template_file" "cfg" {
   template = "${file("${path.module}/files/consul-config-json")} "
 
   vars {
-    node_ip_address = "${azurerm_network_interface.consul.*.private_ip_address[count.index]}"
-    cluster_size    = "${var.cluster_size}"
-    datacenter      = "${var.location}"
-    node_name       = "${format("${var.computer_name_prefix}-%02d", 1 + count.index)}"
-    join_ip_address = "${azurerm_network_interface.consul.0.private_ip_address}"
-    is_node_server  = "${var.create_as_server == "1" ? true : false }"
-    is_ui_enabled   = "${(var.create_as_server && count.index == 0) ? true : false }"
+    node_name             = "${format("${var.computer_name_prefix}-%02d", 1 + count.index)}"
+    datacenter            = "${var.location}"
+    cluster_size          = "${var.cluster_size}"
+    node_ip_address       = "${azurerm_network_interface.consul.*.private_ip_address[count.index]}"
+    join_ip_address       = "${azurerm_network_interface.consul.0.private_ip_address}"
+    consul_install_path   = "${var.consul_install_path}"
+    tls_key_file_path     = "${var.tls_key_file_path}"
+    tls_cert_file_path    = "${var.tls_cert_file_path}"
+    tls_ca_file_path      = "${var.tls_ca_file_path}"
+    gossip_encryption_key = "${var.gossip_encryption_key}"
+    http_api_port         = "${var.http_api_port}"
+    is_node_server        = "${var.create_as_server == "1" ? true : false }"
+    is_ui_enabled         = "${(var.create_as_server && count.index == 0) ? true : false }"
   }
 }
 

@@ -65,15 +65,20 @@ module "consul_servers" {
 
   allowed_inbound_cidr_blocks = "${var.allowed_inbound_cidr_blocks}"
 
-  resource_group_name  = "${azurerm_resource_group.consul.name}"
+  resource_group_name = "${azurerm_resource_group.consul.name}"
 
-  location             = "${var.location}"
-  admin_user_name      = "${var.admin_user_name}"
-  bastion_host_address = "${data.azurerm_public_ip.bastion.ip_address}"
-  private_key_path     = "${file(var.private_key_path)}"
-  instance_size        = "${var.instance_size}"
-  image_id             = "${data.azurerm_image.consul.id}"
-  subnet_id            = "${azurerm_subnet.consul.id}"
+  location              = "${var.location}"
+  instance_size         = "${var.instance_size}"
+  admin_user_name       = "${var.admin_user_name}"
+  bastion_host_address  = "${data.azurerm_public_ip.bastion.ip_address}"
+  private_key_path      = "${file(var.private_key_path)}"
+  image_id              = "${data.azurerm_image.consul.id}"
+  subnet_id             = "${azurerm_subnet.consul.id}"
+  gossip_encryption_key = "${var.gossip_encryption_key}"
+  consul_install_path   = "/etc/consul.d/"
+  tls_key_file_path     = "/etc/consul.d/tls/consul.key.pem"
+  tls_cert_file_path    = "/etc/consul.d/tls/consul.crt.pem"
+  tls_ca_file_path      = "/etc/consul.d/tls/ca.crt.pem"
 }
 
 # ---------------------------------------------------------------------------------------------------------------------

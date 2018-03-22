@@ -7,7 +7,7 @@
 
 set -e
 
-readonly DEFAULT_INSTALL_PATH="/etc/consul"
+readonly DEFAULT_INSTALL_PATH="/etc/consul.d"
 readonly DEFAULT_CONSUL_USER="consul"
 
 readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -114,6 +114,7 @@ function create_consul_install_paths {
   sudo mkdir -p "$path/config"
   sudo mkdir -p "$path/data"
   sudo mkdir -p "$path/log"
+  sudo mkdir -p "$path/tls"
 
   log_info "Changing ownership of $path to $username"
   sudo chown -R "$username:$username" "$path"

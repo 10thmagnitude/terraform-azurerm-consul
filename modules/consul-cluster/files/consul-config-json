@@ -1,16 +1,27 @@
 {
+  "node_name":            "${node_name}",
+  "datacenter":           "${datacenter}",
+  "data_dir":             "${consul_install_path}/data",
+  "bootstrap_expect":     ${cluster_size},
+  "retry_join":           ["${join_ip_address}"],
+  "client_addr":          "0.0.0.0",
   "advertise_addr":       "${node_ip_address}",
   "bind_addr":            "${node_ip_address}",
-  "bootstrap_expect":     ${cluster_size},
-  "client_addr":          "0.0.0.0",
-  "datacenter":           "${datacenter}",
-  "node_name":            "${node_name}",
-  "retry_join":           ["${join_ip_address}"],
-  "data_dir":             "/etc/consul",
+  "ports":                {
+                            "dns":  -1,
+                            "https": ${http_api_port},
+                            "http":  -1
+                          },
+  "key_file":             "${tls_key_file_path}",
+  "cert_file":            "${tls_cert_file_path}",
+  "ca_file":              "${tls_ca_file_path}",
+  "encrypt":              "${gossip_encryption_key}",
   "server":               ${is_node_server},
   "ui":                   ${is_ui_enabled},
-  "raft_protocol":        3,
   "enable_script_checks": true,
   "leave_on_terminate":   true,
-  "disable_remote_exec":  true
+  "rejoin_after_leave":   true,
+  "disable_update_check": true,
+  "verify_outgoing":      true,
+  "verify_incoming":      true
 }

@@ -23,6 +23,10 @@ variable "key_data" {
   description = "The SSH public key that will be added to SSH authorized_users on the consul instances"
 }
 
+variable "gossip_encryption_key" {
+  description = "The encryption key for consul to encrypt gossip traffic"
+}
+
 variable "private_key_path" {
   description = "The local path of the ssh private key"
 }
@@ -34,6 +38,23 @@ variable "bastion_host_address" {
 variable "allowed_inbound_cidr_blocks" {
   description = "A list of CIDR-formatted IP address ranges from which the Azure Instances will allow connections to Consul"
   type        = "list"
+}
+
+variable "tls_key_file_path" {
+  description = "A path to the key used by Consul for RPC encrpytion with TLS"
+}
+
+variable "tls_cert_file_path" {
+  description = "A path to the cert used by Consul for RPC encrpytion with TLS"
+}
+
+variable "tls_ca_file_path" {
+  description = "A path to the ca used by Consul for RPC encrpytion with TLS"
+}
+
+variable "consul_install_path" {
+  description = "A path to the directory where consul is installed"
+  default     = "/etc/consul.d/"
 }
 
 # ---------------------------------------------------------------------------------------------------------------------

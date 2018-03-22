@@ -49,6 +49,10 @@ variable "allowed_inbound_cidr_blocks" {
   default     = ["10.0.0.0/16"]
 }
 
+variable "gossip_encryption_key" {
+  description = "The encryption key for consul to encrypt gossip traffic"
+}
+
 # ---------------------------------------------------------------------------------------------------------------------
 # OPTIONAL PARAMETERS
 # These parameters have reasonable defaults.
