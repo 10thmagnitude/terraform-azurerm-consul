@@ -2,6 +2,10 @@ terraform {
   required_version = ">= 0.10.0"
 }
 
+data "azurerm_resource_group" "consul" {
+  name = "${var.resource_group_name}"
+}
+
 data "template_file" "cfg" {
   count    = "${var.cluster_size}"
   template = "${file("${path.module}/files/consul-config-json")} "
@@ -31,7 +35,7 @@ resource "azurerm_network_interface" "consul" {
   count               = "${var.cluster_size}"
   name                = "${format("${var.computer_name_prefix}-%02d", 1 + count.index)}"
   location            = "${var.location}"
-  resource_group_name = "${var.resource_group_name}"
+  resource_group_name = "${data.azurerm_resource_group.consul.name}"
 
   ip_configuration {
     name                          = "${format("${var.computer_name_prefix}-%02d", 1 + count.index)}"
@@ -48,7 +52,7 @@ resource "azurerm_virtual_machine" "consul" {
   count                            = "${var.cluster_size}"
   name                             = "${format("${var.computer_name_prefix}-%02d", 1 + count.index)}"
   location                         = "${var.location}"
-  resource_group_name              = "${var.resource_group_name}"
+  resource_group_name              = "${data.azurerm_resource_group.consul.name}"
   network_interface_ids            = ["${azurerm_network_interface.consul.*.id[count.index]}"]
   vm_size                          = "${var.instance_size}"
   delete_os_disk_on_termination    = true
@@ -121,7 +125,7 @@ resource "azurerm_virtual_machine" "consul" {
 resource "azurerm_network_security_group" "consul" {
   name                = "${var.cluster_prefix}"
   location            = "${var.location}"
-  resource_group_name = "${var.resource_group_name}"
+  resource_group_name = "${data.azurerm_resource_group.consul.name}"
 }
 
 resource "azurerm_network_security_rule" "ssh" {
@@ -135,7 +139,7 @@ resource "azurerm_network_security_rule" "ssh" {
   network_security_group_name = "${azurerm_network_security_group.consul.name}"
   priority                    = "${100 + count.index}"
   protocol                    = "Tcp"
-  resource_group_name         = "${var.resource_group_name}"
+  resource_group_name         = "${data.azurerm_resource_group.consul.name}"
   source_address_prefix       = "${element(var.allowed_ssh_cidr_blocks, count.index)}"
   source_port_range           = "1024-65535"
 }
@@ -148,7 +152,7 @@ module "security_group_rules" {
   source = "../consul-security-group-rules"
 
   security_group_name         = "${azurerm_network_security_group.consul.name}"
-  resource_group_name         = "${var.resource_group_name}"
+  resource_group_name         = "${data.azurerm_resource_group.consul.name}"
   allowed_inbound_cidr_blocks = ["${var.allowed_inbound_cidr_blocks}"]
 
   server_rpc_port = "${var.server_rpc_port}"
