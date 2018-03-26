@@ -27,14 +27,6 @@ variable "gossip_encryption_key" {
   description = "The encryption key for consul to encrypt gossip traffic"
 }
 
-variable "private_key_path" {
-  description = "The local path of the ssh private key"
-}
-
-variable "bastion_host_address" {
-  description = "The ip address of the bastion host"
-}
-
 variable "allowed_inbound_cidr_blocks" {
   description = "A list of CIDR-formatted IP address ranges from which the Azure Instances will allow connections to Consul"
   type        = "list"
@@ -141,4 +133,10 @@ variable "dns_port" {
 variable "ssh_port" {
   description = "The port used for SSH connections"
   default     = 22
+}
+
+variable "tags" {
+  type        = "map"
+  description = "A map of the tags to use on the resources that are deployed with this module."
+  default     = {}
 }

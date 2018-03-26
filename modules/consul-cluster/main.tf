@@ -8,7 +8,7 @@ data "azurerm_resource_group" "consul" {
 
 data "template_file" "cfg" {
   count    = "${var.cluster_size}"
-  template = "${file("${path.module}/files/consul-config-json")} "
+  template = "${file("${path.module}/files/consul-config-json")}"
 
   vars {
     node_name             = "${format("${var.computer_name_prefix}-%02d", 1 + count.index)}"
@@ -27,9 +27,30 @@ data "template_file" "cfg" {
   }
 }
 
+data "template_file" "custom_data" {
+  count    = "${var.cluster_size}"
+  template = "${file("${path.module}/files/consul-run-sh")}"
+
+  vars {
+    consul_config = "${data.template_file.cfg.*.rendered[count.index]}"
+  }
+}
+
+#---------------------------------------------------------------------------------------------------------------------
+# AVAILABILITY SET FOR CONSUL NODES
+#---------------------------------------------------------------------------------------------------------------------
+
+resource "azurerm_availability_set" "consul" {
+  name                = "${var.cluster_prefix}"
+  location            = "${var.location}"
+  resource_group_name = "${data.azurerm_resource_group.consul.name}"
+
+  tags = "${var.tags}"
+}
+
 #---------------------------------------------------------------------------------------------------------------------
 # CREATE NETWORK INTERFACES TO RUN CONSUL
-# ---------------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------------
 
 resource "azurerm_network_interface" "consul" {
   count               = "${var.cluster_size}"
@@ -42,11 +63,13 @@ resource "azurerm_network_interface" "consul" {
     subnet_id                     = "${var.subnet_id}"
     private_ip_address_allocation = "dynamic"
   }
+
+  tags = "${var.tags}"
 }
 
 #---------------------------------------------------------------------------------------------------------------------
 # CREATE VIRTUAL MACHINES TO RUN CONSUL
-# ---------------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------------
 
 resource "azurerm_virtual_machine" "consul" {
   count                            = "${var.cluster_size}"
@@ -74,6 +97,7 @@ resource "azurerm_virtual_machine" "consul" {
     computer_name  = "${format("${var.computer_name_prefix}-%02d", 1 + count.index)}"
     admin_username = "${var.admin_user_name}"
     admin_password = "${uuid()}"
+    custom_data    = "${data.template_file.custom_data.*.rendered[count.index]}"
   }
 
   os_profile_linux_config {
@@ -85,47 +109,23 @@ resource "azurerm_virtual_machine" "consul" {
     }
   }
 
-  ## TODO: check recursors property in consul config for external DNS??
-  ## TODO: simplify consul configuration file, by grabbing username:
-  # $(echo `hostname`)
-  # $(ifconfig eth0 | grep 'inet' | cut -d: -f2 | awk '{ print $2}')
-  provisioner "file" {
-    content     = "${data.template_file.cfg.*.rendered[count.index]}"
-    destination = "/tmp/config.json.moveme"
-  }
-
-  provisioner "file" {
-    content     = "${file("${path.module}/files/consul-run-sh")}"
-    destination = "/tmp/consul-run.sh"
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "sudo chmod +x /tmp/consul-run.sh",
-      "sudo /bin/bash -c /tmp/consul-run.sh",
-    ]
-  }
-
-  connection {
-    user         = "${var.admin_user_name}"
-    host         = "${azurerm_network_interface.consul.*.private_ip_address[count.index]}"
-    private_key  = "${var.private_key_path}"
-    bastion_host = "${var.bastion_host_address}"
-  }
-
   lifecycle {
-    ignore_changes = ["admin_password"]
+    ignore_changes = ["admin_password", "custom_data"]
   }
+
+  tags = "${var.tags}"
 }
 
 #---------------------------------------------------------------------------------------------------------------------
 # CREATE A SECURITY GROUP AND RULES FOR SSH
-# ---------------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------------
 
 resource "azurerm_network_security_group" "consul" {
   name                = "${var.cluster_prefix}"
   location            = "${var.location}"
   resource_group_name = "${data.azurerm_resource_group.consul.name}"
+
+  tags = "${var.tags}"
 }
 
 resource "azurerm_network_security_rule" "ssh" {
@@ -144,9 +144,9 @@ resource "azurerm_network_security_rule" "ssh" {
   source_port_range           = "1024-65535"
 }
 
-# ---------------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------------
 # THE CONSUL-SPECIFIC INBOUND/OUTBOUND RULES COME FROM THE CONSUL-SECURITY-GROUP-RULES MODULE
-# ---------------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------------------
 
 module "security_group_rules" {
   source = "../consul-security-group-rules"

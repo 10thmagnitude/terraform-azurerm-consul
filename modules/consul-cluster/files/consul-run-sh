@@ -6,11 +6,11 @@
 set -e
 
 # Send the log output from this script to custom-data.log, syslog, and the console
-exec > >(tee /var/log/remote-exec.log|logger -t remote-exec -s 2>/dev/console) 2>&1
+exec > >(tee /var/log/custom-data.log|logger -t custom-data -s 2>/dev/console) 2>&1
 
-mv /tmp/config.json.moveme /etc/consul.d/config/config.json
+sudo echo '${consul_config}' > /etc/consul.d/config/config.json
 
-chown consul:consul /etc/consul.d/config/config.json
+sudo chown consul:consul /etc/consul.d/config/config.json
 
 systemctl daemon-reload
 systemctl start consul.service
