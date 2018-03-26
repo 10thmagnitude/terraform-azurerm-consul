@@ -27,7 +27,7 @@ data "template_file" "cfg" {
   }
 }
 
-data "template_file" "custom_data" {
+data "template_file" "custom_data_consul" {
   count    = "${var.cluster_size}"
   template = "${file("${path.module}/files/consul-run-sh")}"
 
@@ -97,7 +97,7 @@ resource "azurerm_virtual_machine" "consul" {
     computer_name  = "${format("${var.computer_name_prefix}-%02d", 1 + count.index)}"
     admin_username = "${var.admin_user_name}"
     admin_password = "${uuid()}"
-    custom_data    = "${data.template_file.custom_data.*.rendered[count.index]}"
+    custom_data    = "${data.template_file.custom_data_consul.*.rendered[count.index]}"
   }
 
   os_profile_linux_config {
