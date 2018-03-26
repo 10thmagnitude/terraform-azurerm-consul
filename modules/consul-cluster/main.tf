@@ -110,7 +110,7 @@ resource "azurerm_virtual_machine" "consul" {
   }
 
   lifecycle {
-    ignore_changes = ["admin_password", "custom_data"]
+    ignore_changes = ["admin_password"]
   }
 
   tags = "${var.tags}"
