@@ -1,14 +1,12 @@
-#!/bin/bash
-
-set -e
+#!/bin/bash -eux
 
 # Send the log output from this script to custom-data.log
-exec >>tee /var/log/custom-data.log 2>&1
+exec 2> >(sudo tee -a /var/log/custom-data.log)
 
 sudo echo '${consul_config}' > /etc/consul.d/config/config.json
 
 sudo chown consul:consul /etc/consul.d/config/config.json
 
-systemctl daemon-reload
-systemctl start consul.service
-systemctl enable consul.service
+sudo systemctl daemon-reload
+sudo systemctl start consul.service
+sudo systemctl enable consul.service

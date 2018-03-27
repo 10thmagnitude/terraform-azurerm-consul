@@ -1,7 +1,7 @@
 {
   "node_name":            "${node_name}",
   "datacenter":           "${datacenter}",
-  "data_dir":             "${consul_install_path}/data",
+  "data_dir":             "${consul_install_path}/data/",
   "bootstrap_expect":     ${cluster_size},
   "retry_join":           ["${join_ip_address}"],
   "client_addr":          "0.0.0.0",
