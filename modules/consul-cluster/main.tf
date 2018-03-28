@@ -120,45 +120,54 @@ resource "azurerm_virtual_machine" "consul" {
 # CREATE A SECURITY GROUP AND RULES FOR SSH
 #---------------------------------------------------------------------------------------------------------------------
 
-resource "azurerm_network_security_group" "consul" {
-  name                = "${var.cluster_prefix}"
-  location            = "${var.location}"
-  resource_group_name = "${data.azurerm_resource_group.consul.name}"
 
-  tags = "${var.tags}"
-}
+# resource "azurerm_network_security_group" "consul" {
+#   name                = "${var.cluster_prefix}"
+#   location            = "${var.location}"
+#   resource_group_name = "${data.azurerm_resource_group.consul.name}"
 
-resource "azurerm_network_security_rule" "ssh" {
-  count = "${length(var.allowed_ssh_cidr_blocks)}"
 
-  access                      = "Allow"
-  destination_address_prefix  = "*"
-  destination_port_range      = "22"
-  direction                   = "Inbound"
-  name                        = "SSH${count.index}"
-  network_security_group_name = "${azurerm_network_security_group.consul.name}"
-  priority                    = "${100 + count.index}"
-  protocol                    = "Tcp"
-  resource_group_name         = "${data.azurerm_resource_group.consul.name}"
-  source_address_prefix       = "${element(var.allowed_ssh_cidr_blocks, count.index)}"
-  source_port_range           = "1024-65535"
-}
+#   tags = "${var.tags}"
+# }
+
+
+# resource "azurerm_network_security_rule" "ssh" {
+#   count = "${length(var.allowed_ssh_cidr_blocks)}"
+
+
+#   access                      = "Allow"
+#   destination_address_prefix  = "*"
+#   destination_port_range      = "22"
+#   direction                   = "Inbound"
+#   name                        = "SSH${count.index}"
+#   network_security_group_name = "${azurerm_network_security_group.consul.name}"
+#   priority                    = "${100 + count.index}"
+#   protocol                    = "Tcp"
+#   resource_group_name         = "${data.azurerm_resource_group.consul.name}"
+#   source_address_prefix       = "${element(var.allowed_ssh_cidr_blocks, count.index)}"
+#   source_port_range           = "*"
+# }
+
 
 #---------------------------------------------------------------------------------------------------------------------
 # THE CONSUL-SPECIFIC INBOUND/OUTBOUND RULES COME FROM THE CONSUL-SECURITY-GROUP-RULES MODULE
 #---------------------------------------------------------------------------------------------------------------------
 
-module "security_group_rules" {
-  source = "../consul-security-group-rules"
 
-  security_group_name         = "${azurerm_network_security_group.consul.name}"
-  resource_group_name         = "${data.azurerm_resource_group.consul.name}"
-  allowed_inbound_cidr_blocks = ["${var.allowed_inbound_cidr_blocks}"]
+# module "security_group_rules" {
+#   source = "../consul-security-group-rules"
 
-  server_rpc_port = "${var.server_rpc_port}"
-  cli_rpc_port    = "${var.cli_rpc_port}"
-  serf_lan_port   = "${var.serf_lan_port}"
-  serf_wan_port   = "${var.serf_wan_port}"
-  http_api_port   = "${var.http_api_port}"
-  dns_port        = "${var.dns_port}"
-}
+
+#   security_group_name         = "${azurerm_network_security_group.consul.name}"
+#   resource_group_name         = "${data.azurerm_resource_group.consul.name}"
+#   allowed_inbound_cidr_blocks = ["${var.allowed_inbound_cidr_blocks}"]
+
+
+#   server_rpc_port = "${var.server_rpc_port}"
+#   cli_rpc_port    = "${var.cli_rpc_port}"
+#   serf_lan_port   = "${var.serf_lan_port}"
+#   serf_wan_port   = "${var.serf_wan_port}"
+#   http_api_port   = "${var.http_api_port}"
+#   dns_port        = "${var.dns_port}"
+# }
+
