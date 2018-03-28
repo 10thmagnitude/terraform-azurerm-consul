@@ -15,7 +15,7 @@ resource "azurerm_network_security_rule" "allow_server_rpc_inbound" {
   protocol                    = "Tcp"
   resource_group_name         = "${var.resource_group_name}"
   source_address_prefix       = "${element(var.allowed_inbound_cidr_blocks, count.index)}"
-  source_port_range           = "1024-65535"
+  source_port_range           = "*"
 }
 
 resource "azurerm_network_security_rule" "allow_cli_rpc_inbound" {
@@ -31,7 +31,7 @@ resource "azurerm_network_security_rule" "allow_cli_rpc_inbound" {
   protocol                    = "Tcp"
   resource_group_name         = "${var.resource_group_name}"
   source_address_prefix       = "${element(var.allowed_inbound_cidr_blocks, count.index)}"
-  source_port_range           = "1024-65535"
+  source_port_range           = "*"
 }
 
 resource "azurerm_network_security_rule" "allow_serf_lan_tcp_inbound" {
@@ -47,7 +47,7 @@ resource "azurerm_network_security_rule" "allow_serf_lan_tcp_inbound" {
   protocol                    = "Tcp"
   resource_group_name         = "${var.resource_group_name}"
   source_address_prefix       = "${element(var.allowed_inbound_cidr_blocks, count.index)}"
-  source_port_range           = "1024-65535"
+  source_port_range           = "*"
 }
 
 resource "azurerm_network_security_rule" "allow_serf_lan_udp_inbound" {
@@ -63,7 +63,7 @@ resource "azurerm_network_security_rule" "allow_serf_lan_udp_inbound" {
   protocol                    = "Udp"
   resource_group_name         = "${var.resource_group_name}"
   source_address_prefix       = "${element(var.allowed_inbound_cidr_blocks, count.index)}"
-  source_port_range           = "1024-65535"
+  source_port_range           = "*"
 }
 
 resource "azurerm_network_security_rule" "allow_serf_wan_tcp_inbound" {
@@ -79,7 +79,7 @@ resource "azurerm_network_security_rule" "allow_serf_wan_tcp_inbound" {
   protocol                    = "Tcp"
   resource_group_name         = "${var.resource_group_name}"
   source_address_prefix       = "${element(var.allowed_inbound_cidr_blocks, count.index)}"
-  source_port_range           = "1024-65535"
+  source_port_range           = "*"
 }
 
 resource "azurerm_network_security_rule" "allow_serf_wan_udp_inbound" {
@@ -95,7 +95,7 @@ resource "azurerm_network_security_rule" "allow_serf_wan_udp_inbound" {
   protocol                    = "Udp"
   resource_group_name         = "${var.resource_group_name}"
   source_address_prefix       = "${element(var.allowed_inbound_cidr_blocks, count.index)}"
-  source_port_range           = "1024-65535"
+  source_port_range           = "*"
 }
 
 resource "azurerm_network_security_rule" "allow_http_api_inbound" {
@@ -111,7 +111,7 @@ resource "azurerm_network_security_rule" "allow_http_api_inbound" {
   protocol                    = "Tcp"
   resource_group_name         = "${var.resource_group_name}"
   source_address_prefix       = "${element(var.allowed_inbound_cidr_blocks, count.index)}"
-  source_port_range           = "1024-65535"
+  source_port_range           = "*"
 }
 
 resource "azurerm_network_security_rule" "allow_dns_tcp_inbound" {
@@ -127,7 +127,7 @@ resource "azurerm_network_security_rule" "allow_dns_tcp_inbound" {
   protocol                    = "Tcp"
   resource_group_name         = "${var.resource_group_name}"
   source_address_prefix       = "${element(var.allowed_inbound_cidr_blocks, count.index)}"
-  source_port_range           = "1024-65535"
+  source_port_range           = "*"
 }
 
 resource "azurerm_network_security_rule" "allow_dns_udp_inbound" {
@@ -143,7 +143,7 @@ resource "azurerm_network_security_rule" "allow_dns_udp_inbound" {
   protocol                    = "Udp"
   resource_group_name         = "${var.resource_group_name}"
   source_address_prefix       = "${element(var.allowed_inbound_cidr_blocks, count.index)}"
-  source_port_range           = "1024-65535"
+  source_port_range           = "*"
 }
 
 resource "azurerm_network_security_rule" "denyall" {
