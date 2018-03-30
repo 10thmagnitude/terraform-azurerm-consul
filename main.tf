@@ -57,7 +57,7 @@ module "consul_servers" {
 
   cluster_prefix = "${var.cluster_name}"
   cluster_size   = "${var.num_servers}"
-  key_data       = "${var.key_data}"
+  key_data       = "${var.public_ssh_key_data}"
 
   # To make testing easier, we allow Consul and SSH requests from any IP address here but in a production
   # deployment, we strongly recommend you limit this to the IP address ranges of known, trusted servers inside your VPC.
@@ -139,7 +139,7 @@ resource "azurerm_virtual_machine" "bastion" {
 
     ssh_keys {
       path     = "/home/${var.admin_user_name}/.ssh/authorized_keys"
-      key_data = "${var.key_data}"
+      key_data = "${var.public_ssh_key_data}"
     }
   }
 
