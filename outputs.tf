@@ -1,11 +1,11 @@
-output "consul_ip_addresses" {
-  value = "${module.consul_servers.cluster_ip_addresses}"
+output "cluster_ip_addresses" {
+  value = "${azurerm_network_interface.consul.*.private_ip_address}"
 }
 
-output "consul_ui_tunnel" {
-  value = "ssh -o ProxyCommand='ssh -W %h:%p ${var.admin_user_name}@${data.azurerm_public_ip.bastion.ip_address}' ${var.admin_user_name}@${module.consul_servers.cluster_ip_addresses[0]} -L 127.0.0.1:${module.consul_servers.consul_http_api_port}:localhost:${module.consul_servers.consul_http_api_port}"
+output "consul_ui_address" {
+  value = "${azurerm_network_interface.consul.0.private_ip_address}"
 }
 
-output "consul_ssh" {
-  value = "ssh -o ProxyCommand='ssh -W %h:%p ${var.admin_user_name}@${data.azurerm_public_ip.bastion.ip_address}' ${var.admin_user_name}@${module.consul_servers.cluster_ip_addresses[0]}"
+output "consul_http_api_port" {
+  value = "${var.http_api_port}"
 }
