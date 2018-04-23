@@ -76,6 +76,7 @@ resource "azurerm_virtual_machine" "consul" {
   name                             = "${format("${var.computer_name_prefix}-%02d", 1 + count.index)}"
   location                         = "${var.location}"
   resource_group_name              = "${data.azurerm_resource_group.consul.name}"
+  availability_set_id              = "${azurerm_availability_set.consul.id}"
   network_interface_ids            = ["${azurerm_network_interface.consul.*.id[count.index]}"]
   vm_size                          = "${var.instance_size}"
   delete_os_disk_on_termination    = true
