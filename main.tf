@@ -44,6 +44,7 @@ resource "azurerm_availability_set" "consul" {
   name                = "${var.cluster_prefix}"
   location            = "${var.location}"
   resource_group_name = "${data.azurerm_resource_group.consul.name}"
+  managed             = true
 
   tags = "${var.tags}"
 }
